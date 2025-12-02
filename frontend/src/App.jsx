@@ -11,9 +11,9 @@ import PrivateRoute from './components/PrivateRoute'
 
 export default function App() {
   return (
-    <div>
+    <div className="min-h-screen bg-dark-900">
       <Navbar />
-      <main className="container">
+      <main>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<LoginPage />} />

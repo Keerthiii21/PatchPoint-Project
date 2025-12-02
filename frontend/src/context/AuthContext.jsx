@@ -22,17 +22,27 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => { fetchMe() }, [])
 
   const signup = async (data) => {
-    const res = await authApi.signup(data)
-    setCurrentUser(res.data.user)
-    setIsAuthenticated(true)
-    return res
+    try {
+      const res = await authApi.signup(data)
+      setCurrentUser(res.data.user)
+      setIsAuthenticated(true)
+      return res
+    } catch (err) {
+      console.error('Signup error in context:', err.response?.data || err.message)
+      throw err
+    }
   }
 
   const login = async (data) => {
-    const res = await authApi.login(data)
-    setCurrentUser(res.data.user)
-    setIsAuthenticated(true)
-    return res
+    try {
+      const res = await authApi.login(data)
+      setCurrentUser(res.data.user)
+      setIsAuthenticated(true)
+      return res
+    } catch (err) {
+      console.error('Login error in context:', err.response?.data || err.message)
+      throw err
+    }
   }
 
   const logout = async () => {

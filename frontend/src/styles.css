@@ -1,21 +1,54 @@
-:root{--blue:#0b6ef6;--muted:#6b7280}
-*{box-sizing:border-box}
-body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:#ffffff;color:#111;margin:0}
-.container{max-width:1100px;margin:24px auto;padding:0 16px}
-.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee}
-.brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--blue)}
-.navlinks{display:flex;gap:12px;align-items:center}
-.btn{background:var(--blue);color:#fff;padding:8px 12px;border-radius:6px;border:none;cursor:pointer}
-.btn.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue)}
-.card{border:1px solid #eee;padding:12px;border-radius:8px;background:#fff}
-form{display:grid;gap:8px}
-input,textarea,select{padding:8px;border:1px solid #ddd;border-radius:6px}
-.grid{display:grid;gap:12px}
-.flex{display:flex;gap:12px;align-items:center}
-.map{height:400px;border-radius:8px;overflow:hidden}
-.list{margin-top:12px}
-.table{width:100%;border-collapse:collapse}
-.table th,.table td{padding:8px;border-bottom:1px solid #f1f1f1;text-align:left}
-.thumb{width:80px;height:60px;object-fit:cover;border-radius:6px}
-.muted{color:var(--muted)}
-.center{text-align:center}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-900 text-white;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-bold;
+  }
+  
+  a {
+    @apply text-blue-400 hover:text-blue-300 transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-dark-850/40 backdrop-blur-md border border-white/10 rounded-lg;
+  }
+  
+  .glass-lg {
+    @apply bg-dark-850/40 backdrop-blur-md border border-white/10 rounded-xl;
+  }
+  
+  .btn-primary {
+    @apply px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-200 active:scale-95;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2.5 bg-dark-700 hover:bg-dark-600 text-white font-semibold rounded-lg transition-all duration-200 border border-white/10;
+  }
+  
+  .btn-ghost {
+    @apply px-4 py-2.5 bg-transparent hover:bg-white/5 text-blue-400 hover:text-blue-300 font-semibold rounded-lg transition-all duration-200 border border-blue-400/30;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2.5 bg-dark-700/50 border border-white/10 rounded-lg text-white placeholder-dark-400 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 transition-all duration-200;
+  }
+  
+  .card-glass {
+    @apply glass p-5 md:p-6;
+  }
+  
+  .card-glass-lg {
+    @apply glass-lg p-6 md:p-8;
+  }
+}
+

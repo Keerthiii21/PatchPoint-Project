@@ -1,10 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key_change_me';
 
 const createToken = (user) => {
   return jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
