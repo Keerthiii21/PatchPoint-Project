@@ -1,3 +1,49 @@
+# Deployment Checklist (Render)
+
+Use this checklist when deploying PatchPoint to Render (or a similar PaaS). It covers both backend and frontend.
+
+## Backend (Web Service)
+- Create a new Web Service on Render and connect your GitHub repo.
+- Build command: `npm install`
+- Start command: `npm run start` (or `node server.js` if configured)
+- Instance: choose a plan (free may sleep on inactivity)
+
+### Environment variables (set these in Render dashboard):
+- `MONGO_URI` - MongoDB Atlas connection string
+- `JWT_SECRET` - secure random secret
+- `CORS_ORIGIN` - comma-separated allowed origins (e.g. `https://your-frontend.onrender.com`)
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `PORT` - not strictly necessary on Render (Render sets it), but can be set to `5000` for parity
+
+### Other backend notes:
+- Ensure `backend/public` is served by Express (static middleware is present in `server.js`).
+- Verify health by visiting `https://<your-backend>.onrender.com/` and `https://<your-backend>.onrender.com/api/potholes`.
+
+## Frontend (Static Site or Web Service)
+- Option A (Static Site): Build and deploy `frontend/dist` as a static site.
+  - Build command: `npm run build`
+  - Publish directory: `frontend/dist`
+- Option B (Web Service): Deploy as a web service that runs a server to serve `dist`.
+
+### Environment variables (frontend site settings):
+- `VITE_API_URL` - set to your backend URL (e.g. `https://<your-backend>.onrender.com`)
+
+## Post-deploy verification
+- Check the frontend loads and makes API calls to `VITE_API_URL`.
+- Open browser DevTools → Network to confirm requests to `https://<your-backend>.onrender.com/api/*`.
+- Verify authentication flows work (login/signup) and cookies are being set (if using cookies for JWT).
+- Verify image uploads (Cloudinary) function correctly via the UI or `POST /api/upload/image`.
+
+## Security & Maintenance
+- Rotate any keys accidentally committed to GitHub immediately.
+- Use Render secrets for environment variables — do not commit `.env` files.
+- Enable HTTPS (Render provides it by default) and set proper CORS origins.
+
+---
+
+If you'd like, I can produce a Render-specific step-by-step guide with screenshots and exact Render settings. Want me to generate that next?
 # 🚀 PatchPoint Deployment Checklist
 
 ## ✅ Pre-Deployment (Local Testing)
