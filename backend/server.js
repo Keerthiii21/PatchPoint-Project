@@ -23,7 +23,20 @@ const corsOriginStr = process.env.CORS_ORIGIN || 'http://localhost:5173,http://l
 const corsOrigins = corsOriginStr.split(',').map(o => o.trim());
 console.log('CORS origins:', corsOrigins);
 
-app.use(cors({ origin: corsOrigins, credentials: true }));
+// CORS configuration with credential support and proper error handling
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || corsOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      console.warn(`CORS blocked: ${origin}`)
+      callback(new Error('CORS not allowed'))
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Routes
 app.use('/api/auth', require('./src/routes/authRoutes'));
