@@ -1,3 +1,135 @@
+# PatchPoint
+
+PatchPoint is a pothole reporting and visualization platform that includes:
+- A Node.js + Express backend (MongoDB + Cloudinary) providing REST APIs.
+- A Vite + React frontend (TailwindCSS) for reporting and viewing potholes.
+- A Raspberry Pi uploader script to send detections to the backend.
+
+This repository contains the full-stack project (backend, frontend, Pi integration).
+
+---
+
+## Quick Start (local development)
+
+Prerequisites:
+- Node.js (v16+ recommended)
+- npm
+- A MongoDB URI (Atlas or local)
+
+1) Backend
+
+```powershell
+cd backend
+npm install
+# create a .env file (see .env.example)
+npm run dev
+```
+
+The backend listens on the port defined in `backend/.env` (`PORT`, default `5000`).
+
+2) Frontend
+
+```powershell
+cd frontend
+npm install
+# configure frontend/.env (VITE_API_URL)
+npm run dev
+```
+
+Frontend dev server runs on Vite's default port (usually 5173); the frontend uses
+the environment variable `VITE_API_URL` to call the backend. See `frontend/.env.example`.
+
+3) Raspberry Pi
+
+The Pi script in the repository uploads detection results to the backend endpoint
+`POST /api/potholes/pi`. Do not modify the backend or Pi script when changing the frontend.
+
+---
+
+## Environment variables
+
+Backend (`backend/.env`) - required keys (examples in `backend/.env.example`):
+
+- `PORT` (e.g. `5000`)
+- `MONGO_URI` (MongoDB connection string)
+- `JWT_SECRET` (secret for JWT signing)
+- `CORS_ORIGIN` (comma-separated allowed origins)
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Frontend (`frontend/.env`):
+
+- `VITE_API_URL=https://your-backend.example.com` (example: `https://temp-pdb7.onrender.com`)
+
+Important: Do not commit secrets to public repositories. The local `.env` is for development only.
+
+---
+
+## How the frontend calls the backend
+
+- The frontend uses `import.meta.env.VITE_API_URL` as the base API URL. All API calls go through `frontend/src/api/axiosClient.js` which reads `VITE_API_URL`.
+- Example: the frontend fetches potholes from `${import.meta.env.VITE_API_URL}/api/potholes`.
+
+This makes switching between local and deployed backends simple by changing the `VITE_API_URL` value.
+
+---
+
+## Deployment (Render)
+
+High-level steps:
+
+1. Create a Render Web Service for the backend.
+   - Set the start command to: `npm run start` (or use the `web` service configured in `package.json`).
+   - Add environment variables (MONGO_URI, JWT_SECRET, CLOUDINARY_*, CORS_ORIGIN, PORT if needed).
+
+2. Create a Static Site (or Web Service) for the frontend.
+   - If using Static Site: build locally or via Render build command `npm run build` and point static site to `frontend/dist`.
+   - Set `VITE_API_URL` in the frontend site's environment variables to your backend Render URL (e.g. `https://temp-pdb7.onrender.com`).
+
+3. (Optional) Add the `best_pothole_map.html` static file placed in `backend/public/best_pothole_map.html` — it will be served by the backend static assets.
+
+---
+
+## Useful commands
+
+Start backend (dev):
+```powershell
+cd backend
+npm run dev
+```
+
+Start frontend (dev):
+```powershell
+cd frontend
+npm run dev
+```
+
+Build frontend:
+```powershell
+cd frontend
+npm run build
+```
+
+Run backend tests (if any):
+```powershell
+cd backend
+npm test
+```
+
+---
+
+## Where to find things
+
+- Backend entry: `backend/server.js`
+- Frontend entry: `frontend/src/main.jsx` and `frontend/src/App.jsx`
+- Frontend API clients: `frontend/src/api/*.js` (all use `axiosClient` with `VITE_API_URL`)
+- Pi uploader script: `FINAL_INTEGRATION_STORED_VIDEO.py` (top-level or in Pi folder)
+- Static visualization: `backend/public/best_pothole_map.html`
+
+---
+
+If you'd like, I can also add a short `CONTRIBUTING.md` and a deployment checklist for Render. Want me to add that next?
 # 🚨 PatchPoint: Pothole Detection System
 
 > **Live pothole detection, reporting, and tracking system** using Raspberry Pi + ML + Full-stack Web App
