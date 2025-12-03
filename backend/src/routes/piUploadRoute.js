@@ -28,7 +28,7 @@ router.post('/pi-upload', upload.single('image'), async (req, res) => {
         gpsLat: parseFloat(lat) || 0,
         gpsLon: parseFloat(lon) || 0,
         depthCm: depth ? parseFloat(depth) : undefined,
-        timestamp: timestamp ? new Date(parseInt(timestamp)) : new Date()
+        timestamp: timestamp ? new Date(timestamp) : new Date()
       });
 
       await pothole.save();
