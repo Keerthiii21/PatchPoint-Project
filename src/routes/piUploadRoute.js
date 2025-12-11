@@ -4,74 +4,58 @@ const multer = require('multer');
 const streamifier = require('streamifier');
 const cloudinary = require('../config/cloudinary');
 const Pothole = require('../models/Pothole');
-const fetch = require('node-fetch'); // required for reverse geocoding
+const axios = require('axios');   // ⭐ Added for reverse geocoding
 
-// Memory storage for Cloudinary upload
+// Use memory storage so we can stream buffer to Cloudinary via upload_stream
 const upload = multer({ storage: multer.memoryStorage() });
 
-/* ----------------------------------------
-   REVERSE GEOCODING FUNCTION (NEW)
------------------------------------------*/
-async function getAddress(lat, lon) {
+// ⭐ Reverse Geocoding Function
+async function getAddressFromCoords(lat, lon) {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
-
-    const response = await fetch(url, {
-      headers: { "User-Agent": "PatchPoint-App" }
+    const res = await axios.get(url, {
+      headers: { 'User-Agent': 'PatchPoint/1.0' }
     });
 
-    const data = await response.json();
-    return data.display_name || "Unknown Address";
+    return res.data?.display_name || null;
   } catch (err) {
-    console.error("Reverse geocoding error:", err);
-    return "Unknown Address";
+    console.log("Reverse geocoding failed:", err.message);
+    return null;
   }
 }
 
-/* ----------------------------------------
-   PI UPLOAD ROUTE
------------------------------------------*/
+// POST /api/potholes/pi-upload
 router.post('/pi-upload', upload.single('image'), async (req, res) => {
   try {
     const { lat, lon, depth, timestamp } = req.body;
 
-    if (!req.file)
+    if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image uploaded' });
+    }
 
-    const gpsLat = parseFloat(lat) || 0;
-    const gpsLon = parseFloat(lon) || 0;
-    const depthCm = depth ? parseFloat(depth) : 0;
+    // ⭐ Step 1: Get address BEFORE saving pothole
+    const address = await getAddressFromCoords(lat, lon);
 
-    /* ----------------------------------------
-       1️⃣ GET ADDRESS FROM GPS COORDINATES
-    -----------------------------------------*/
-    const address = await getAddress(gpsLat, gpsLon);
-
-    /* ----------------------------------------
-       2️⃣ Upload to Cloudinary (same as before)
-    -----------------------------------------*/
+    // Step 2: Upload image to Cloudinary
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder: 'patchpoint/pi' },
       async (error, result) => {
         if (error) {
           console.error('Cloudinary upload error:', error);
-          return res.status(500).json({ success: false, message: 'Image upload failed', error });
+          return res.status(500).json({ success: false, message: 'Image upload failed' });
         }
 
-        /* ----------------------------------------
-           3️⃣ Save pothole entry with address + time
-        -----------------------------------------*/
+        // Step 3: Save pothole to DB WITH address
         const pothole = new Pothole({
           imageUrl: result.secure_url,
-          gpsLat,
-          gpsLon,
-          depthCm,
-          address, // ⭐ NEW FIELD
-          timestamp: timestamp ? new Date(timestamp) : new Date()
+          gpsLat: parseFloat(lat) || 0,
+          gpsLon: parseFloat(lon) || 0,
+          depthCm: depth ? parseFloat(depth) : undefined,
+          timestamp: timestamp ? new Date(timestamp) : new Date(),
+          address: address || "-"   // ⭐ Added here
         });
 
         await pothole.save();
-
         return res.json({ success: true, pothole });
       }
     );
