@@ -9,7 +9,7 @@ exports.createFromPi = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing GPS" });
     }
 
-    // ---- FIX TIMESTAMP (Convert to local IST) ----
+    // ---- FIX TIMESTAMP (Convert to IST) ----
     const ts = timestamp ? new Date(timestamp) : new Date();
     const localTimestamp = ts.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
