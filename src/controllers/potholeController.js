@@ -9,14 +9,14 @@ exports.createFromPi = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing GPS" });
     }
 
-    // ---- FIX TIMESTAMP ----
+    // ---- FIX TIMESTAMP (Convert to local IST) ----
     const ts = timestamp ? new Date(timestamp) : new Date();
     const localTimestamp = ts.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
     // ---- REVERSE GEOCODING ----
     const geoURL = `https://nominatim.openstreetmap.org/reverse?lat=${gps_lat}&lon=${gps_lon}&format=json`;
-    let address = null;
 
+    let address = null;
     try {
       const geo = await axios.get(geoURL, {
         headers: { "User-Agent": "PatchPoint/1.0" }
@@ -26,7 +26,7 @@ exports.createFromPi = async (req, res) => {
       console.log("Reverse geocoding failed:", e.message);
     }
 
-    // ---- SAVE TO DB ----
+    // ---- SAVE TO DATABASE ----
     const pothole = await Pothole.create({
       gpsLat: gps_lat,
       gpsLon: gps_lon,
