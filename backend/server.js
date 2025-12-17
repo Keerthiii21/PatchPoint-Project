@@ -36,6 +36,9 @@ app.use('/api/potholes', require('./src/routes/piUploadRoute'));
 app.use('/api/comments', require('./src/routes/commentRoutes'));
 app.use('/api/upload', require('./src/routes/uploadRoutes'));
 
+// Reverse geocoding route (Nominatim)
+app.use('/api/geocode', require('./src/routes/geocodeRoute'));
+
 app.get('/', (req, res) => res.send({ ok: true, message: 'PATCHPOINT API' }));
 
 
