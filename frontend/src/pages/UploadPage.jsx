@@ -18,6 +18,97 @@ export default function UploadPage(){
   const [loading, setLoading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
 
+  // Map and geocoding refs/state (internal coordinates only)
+  const mapRef = React.useRef(null)
+  const markerRef = React.useRef(null)
+  const mapContainerRef = React.useRef(null)
+
+  const DEFAULT_CENTER = [20.5937, 78.9629]
+  const DEFAULT_ZOOM = 5
+
+  React.useEffect(() => {
+    const init = () => {
+      const L = window.L
+      if (!L || !mapContainerRef.current) return
+      if (mapRef.current) return
+
+      const map = L.map(mapContainerRef.current).setView(DEFAULT_CENTER, DEFAULT_ZOOM)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map)
+
+      map.on('click', async (e) => {
+        const { lat, lng } = e.latlng
+        placeMarker([lat, lng])
+        await handleReverseGeocode(lat, lng)
+      })
+
+      mapRef.current = map
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init)
+      return () => document.removeEventListener('DOMContentLoaded', init)
+    } else {
+      init()
+    }
+  }, [])
+
+  const placeMarker = (coords) => {
+    const L = window.L
+    if (!L || !mapRef.current) return
+    const [lat, lng] = coords
+    if (markerRef.current) {
+      markerRef.current.setLatLng([lat, lng])
+    } else {
+      markerRef.current = L.marker([lat, lng], { draggable: true }).addTo(mapRef.current)
+      markerRef.current.on('dragend', async () => {
+        const pos = markerRef.current.getLatLng()
+        placeMarker([pos.lat, pos.lng])
+        await handleReverseGeocode(pos.lat, pos.lng)
+      })
+    }
+    mapRef.current.setView([lat, lng], 16)
+    setGpsLat(Number(lat).toFixed(6))
+    setGpsLon(Number(lng).toFixed(6))
+  }
+
+  const handleReverseGeocode = async (lat, lng) => {
+    try {
+      setMessage(null)
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('Reverse geocode failed')
+      const data = await res.json()
+      setAddress(data.display_name || '')
+    } catch (err) {
+      setMessage('Failed to reverse geocode location')
+    }
+  }
+
+  const handleLocate = async () => {
+    if (!address || address.trim() === '') {
+      setMessage('Please enter an address to locate')
+      return
+    }
+    try {
+      setMessage(null)
+      const q = encodeURIComponent(address)
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('Geocode failed')
+      const data = await res.json()
+      if (!data || !data.length) {
+        setMessage('Address not found')
+        return
+      }
+      const { lat, lon } = data[0]
+      placeMarker([parseFloat(lat), parseFloat(lon)])
+    } catch (err) {
+      setMessage('Address lookup failed')
+    }
+  }
+
   const handleDrag = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -56,6 +147,11 @@ export default function UploadPage(){
     setMessage(null)
     setSuccess(false)
     setLoading(true)
+    if (!gpsLat || !gpsLon) {
+      setMessage('Please select a location on the map or use the Locate button to set it.')
+      setLoading(false)
+      return
+    }
     try{
       let imageUrl = null
       if (file) {
@@ -142,36 +238,26 @@ export default function UploadPage(){
               <MapPin className="w-5 h-5 text-blue-400" />
               Location Details
             </h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Latitude"
-                type="number"
-                step="0.00001"
-                placeholder="37.7749"
-                value={gpsLat}
-                onChange={e=>setGpsLat(e.target.value)}
-                required
-              />
-              <Input
-                label="Longitude"
-                type="number"
-                step="0.00001"
-                placeholder="-122.4194"
-                value={gpsLon}
-                onChange={e=>setGpsLon(e.target.value)}
-                required
-              />
+
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Input
+                  label="Enter Address"
+                  type="text"
+                  icon={Home}
+                  placeholder="Enter address to locate"
+                  value={address}
+                  onChange={e=>setAddress(e.target.value)}
+                />
+              </div>
+              <div>
+                <button type="button" onClick={handleLocate} className="px-4 py-2 bg-blue-500 text-white rounded-md">Locate</button>
+              </div>
             </div>
-            
-            <Input
-              label="Address"
-              type="text"
-              icon={Home}
-              placeholder="Street address (optional)"
-              value={address}
-              onChange={e=>setAddress(e.target.value)}
-            />
+
+            <div ref={mapContainerRef} id="upload-map" style={{ height: '400px' }} className="w-full rounded-lg overflow-hidden" />
+
+            <p className="text-sm text-dark-400">Click the map to drop a pin, or drag the pin to adjust location. Address will be auto-filled.</p>
           </Card>
 
           {/* Depth */}
